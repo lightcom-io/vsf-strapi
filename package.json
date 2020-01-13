@@ -1,0 +1,31 @@
+{
+  "name": "@lightcom-io/vsf-strapi",
+  "version": "0.1.0",
+  "description": "Strapi integration module built for vue-storefront, by Lightcom.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightcom-io/vsf-strapi.git"
+  },
+  "keywords": [
+    "strapi",
+    "lightcom-io",
+    "vue-storefront",
+    "divanteltd/vue-storefront"
+  ],
+  "author": "Salem Sallnäs <salem@lightcom.io> (http://lightcom.io)",
+  "maintainers": [
+    "Salem Sallnäs <salem@lightcom.io> (http://lightcom.io)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lightcom-io/vsf-strapi/issues"
+  },
+  "homepage": "https://github.com/lightcom-io/vsf-strapi#readme"
+}
