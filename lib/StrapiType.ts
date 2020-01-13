@@ -17,7 +17,7 @@ export default class StrapiType {
   mutations: any;
   actions: any;
 
-  constructor(type: { name: string; fields: any[]; }, strapi: Strapi) {
+  constructor (type: { name: string, fields: any[] }, strapi: Strapi) {
     this.strapi = strapi
     this.name = pluralize(type.name, Infinity)
     this.fields = type.fields
@@ -30,28 +30,28 @@ export default class StrapiType {
 
     this.actions = {
       fetchCollection: _.camelCase(`fetch-${this.plural}`),
-      fetchItem: _.camelCase(`fetch-${this.singular}`),
+      fetchItem: _.camelCase(`fetch-${this.singular}`)
       // fetchItemBySlug: _.camelCase(`fetch-${this.singular}-by-slug`),
     }
   }
 
-  get singular() {
+  get singular () {
     return pluralize(this.name, 1)
   }
 
-  get plural() {
+  get plural () {
     return this.name
   }
 
-  get graphqlFields() {
+  get graphqlFields () {
     return this.fields.join(' ')
   }
 
-  get hasSlugField() {
+  get hasSlugField () {
     return this.fields.some(field => field == 'slug')
   }
 
-  generateActions(actions: ActionTree<any, any>) {
+  generateActions (actions: ActionTree<any, any>) {
     actions[this.actions.fetchCollection] = this.generateFetchCollectionAction()
     actions[this.actions.fetchItem] = this.generateFetchItemAction()
 
@@ -60,24 +60,24 @@ export default class StrapiType {
     // }
   }
 
-  generateGetters(getters: GetterTree<any,any>) {
+  generateGetters (getters: GetterTree<any, any>) {
     getters[this.singular] = state => state[this.singular]
     getters[`${this.plural}Count`] = state => state[`${this.plural}Count`]
     getters[this.plural] = state => state[this.plural]
   }
 
-  generateMutations(mutations: MutationTree<any>) {
+  generateMutations (mutations: MutationTree<any>) {
     mutations[this.mutations.setCollection] = (state, payload) => state[this.plural] = payload
     mutations[this.mutations.setCount] = (state, payload) => state[`${this.plural}Count`] = payload
     mutations[this.mutations.setItem] = (state, payload) => state[this.singular] = payload
   }
 
-  generateFetchItemAction() {
-    return ({ commit },{ query, variables = {}}) => new Promise((resolve, reject) => {
+  generateFetchItemAction () {
+    return ({ commit }, { query, variables = {}}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables).then((resp) => {
         let item: object
 
-        if(this.plural in resp.data) {
+        if (this.plural in resp.data) {
           item = resp.data[this.plural].shift()
         } else {
           item = resp.data[this.singular]
@@ -87,23 +87,24 @@ export default class StrapiType {
         commit(this.mutations.setItem, item)
         resolve(item)
       })
-
+        .catch(reject)
     })
   }
 
-  generateFetchCollectionAction() {
+  generateFetchCollectionAction () {
     return ({ commit, state }, { query, variables = {}}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables).then((resp) => {
         let items = resp.data[this.plural]
         console.log(`[Strapi] fetched collection ${this.plural}:`, items.length)
         commit(this.mutations.setCollection, items)
 
-        if('count' in resp.data) {
+        if ('count' in resp.data) {
           commit(this.mutations.setCount, resp.data.count.length)
         }
 
         resolve(items)
       })
+        .catch(reject)
     })
   }
 }
