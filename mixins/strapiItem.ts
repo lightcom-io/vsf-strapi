@@ -6,8 +6,13 @@ export default (typeName: string) => {
   const type = Strapi.getType(typeName)
 
   return {
-    serverPrefetch() {
+    serverPrefetch () {
       return this.fetchItem()
+    },
+    data () {
+      return {
+        strapiError: null
+      }
     },
     computed: {
       ...mapGetters({
@@ -15,15 +20,18 @@ export default (typeName: string) => {
       })
     },
     // Client-side only
-    mounted() {
+    mounted () {
       isServer || this.fetchItem()
     },
     methods: {
-      fetchItem() {
-        const {query,variables = {}} = this.strapiQuery()
-        return this.$store.dispatch(`strapi/${type.actions.fetchItem}`, {query,variables})
-      },
+      fetchItem () {
+        const {query, variables = {}} = this.strapiQuery()
+        return this.$store.dispatch(`strapi/${type.actions.fetchItem}`, {query, variables})
+          .catch(err => {
+            this.strapiError = err
+            if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)
+          })
+      }
     }
   }
 }
-

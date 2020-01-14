@@ -74,37 +74,46 @@ export default class StrapiType {
 
   generateFetchItemAction () {
     return ({ commit }, { query, variables = {}}) => new Promise((resolve, reject) => {
-      this.strapi.query(query, variables).then((resp) => {
-        let item: object
+      this.strapi.query(query, variables)
+        .then((resp) => {
+          let item: object
+          if (this.plural in resp.data) {
+            item = resp.data[this.plural].shift()
+          } else {
+            item = resp.data[this.singular]
+          }
 
-        if (this.plural in resp.data) {
-          item = resp.data[this.plural].shift()
-        } else {
-          item = resp.data[this.singular]
-        }
-
-        console.log(`[Strapi] fetched single ${this.singular}:`, item)
-        commit(this.mutations.setItem, item)
-        resolve(item)
-      })
-        .catch(reject)
+          console.log(`[Strapi] Fetched single ${this.singular}:`, item)
+          commit(this.mutations.setItem, item)
+          resolve(item)
+        })
+        .catch(err => {
+          console.error(`[Strapi] Failed to fetch item ${this.singular}:`, err)
+          commit(this.mutations.setItem, null)
+          reject(err)
+        })
     })
   }
 
   generateFetchCollectionAction () {
     return ({ commit, state }, { query, variables = {}}) => new Promise((resolve, reject) => {
-      this.strapi.query(query, variables).then((resp) => {
-        let items = resp.data[this.plural]
-        console.log(`[Strapi] fetched collection ${this.plural}:`, items.length)
-        commit(this.mutations.setCollection, items)
+      this.strapi.query(query, variables)
+        .then((resp) => {
+          let items = resp.data[this.plural]
+          console.log(`[Strapi] Fetched collection ${this.plural}:`, items.length)
+          commit(this.mutations.setCollection, items)
 
-        if ('count' in resp.data) {
-          commit(this.mutations.setCount, resp.data.count.length)
-        }
+          if ('count' in resp.data) {
+            commit(this.mutations.setCount, resp.data.count.length)
+          }
 
-        resolve(items)
-      })
-        .catch(reject)
+          resolve(items)
+        })
+        .catch(err => {
+          console.error(`[Strapi] Failed to fetch collection of ${this.plural}:`, err)
+          commit(this.mutations.setCollection, [])
+          reject(err)
+        })
     })
   }
 }
