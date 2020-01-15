@@ -4,6 +4,7 @@ import config from 'config'
 import StrapiType from './StrapiType'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import fetch from 'isomorphic-fetch'
+import { Logger } from '@vue-storefront/core/lib/logger'
 
 export class Strapi {
   url: string;
@@ -18,7 +19,7 @@ export class Strapi {
   }
 
   async query (query: string, variables = {}) {
-    console.log('[Strapi]: Performing query ', {query, variables})
+    Logger.info('Performing query', 'Strapi', {query, variables})()
 
     const gqlQueryBody = JSON.stringify({ query, variables })
 
@@ -34,18 +35,19 @@ export class Strapi {
     })
 
     if (!resp.ok) {
-      console.error(`[Strapi] Error ${resp.status} ${resp.statusText}`)
+      Logger.error('Strapi query failed', 'Strapi', `${resp.status} ${resp.statusText}`)()
+
       return Promise.reject(resp.statusText)
     }
     return await resp.json()
   }
 
   generateState () {
-    return this.types.reduce((state: any, type: StrapiType) => Object.assign(state, {
-      [type.singular]: null,
-      [type.plural]: [],
-      [`${type.plural}Count`]: null
-    }), {})
+    const state: any = {}
+
+    this.types.forEach((type: StrapiType) => type.generateState(state))
+
+    return state
   }
 
   generateActions () {

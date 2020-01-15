@@ -17,16 +17,25 @@ export default (typeName: string) => {
     computed: {
       ...mapGetters({
         [type.singular]: `strapi/${type.singular}`
-      })
+      }),
+      strapiPersistenceMatch () {
+        return this.getStrapiPersistenceKey() === this.$store.state.strapi[`${type.singular}persistenceKey`]
+      }
     },
     // Client-side only
     mounted () {
-      isServer || this.fetchItem()
+      if (!this[type.singular] || !this.strapiPersistenceMatch) {
+        this.fetchItem()
+      }
     },
     methods: {
+      getStrapiPersistenceKey () {
+        return this.$route.fullPath
+      },
       fetchItem () {
+        const persistenceKey = this.getStrapiPersistenceKey()
         const {query, variables = {}} = this.strapiQuery()
-        return this.$store.dispatch(`strapi/${type.actions.fetchItem}`, {query, variables})
+        return this.$store.dispatch(`strapi/${type.actions.fetchItem}`, {query, variables, persistenceKey})
           .catch(err => {
             this.strapiError = err
             if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)

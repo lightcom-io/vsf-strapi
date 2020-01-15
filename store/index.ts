@@ -8,5 +8,3 @@ export const module: Module<any, any> = {
   getters: Strapi.generateGetters(),
   mutations: Strapi.generateMutations()
 }
-
-console.log('strapi store',module)

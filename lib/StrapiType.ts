@@ -2,6 +2,7 @@ import _ from 'lodash'
 import pluralize from 'pluralize'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import { Strapi } from './Strapi'
+import { Logger } from '@vue-storefront/core/lib/logger'
 
 const defaultQueryVars = {
   sort: undefined,
@@ -13,14 +14,12 @@ const defaultQueryVars = {
 export default class StrapiType {
   strapi: Strapi;
   name: string;
-  fields: any[];
   mutations: any;
   actions: any;
 
-  constructor (type: { name: string, fields: any[] }, strapi: Strapi) {
+  constructor (type: { name: string }, strapi: Strapi) {
     this.strapi = strapi
     this.name = pluralize(type.name, Infinity)
-    this.fields = type.fields
 
     this.mutations = {
       setCollection: `SET_${this.plural.toUpperCase()}`,
@@ -43,37 +42,39 @@ export default class StrapiType {
     return this.name
   }
 
-  get graphqlFields () {
-    return this.fields.join(' ')
-  }
-
-  get hasSlugField () {
-    return this.fields.some(field => field == 'slug')
+  generateState (state: any) {
+    state[this.singular] = null
+    state[this.plural] = []
+    // state[`${this.plural}Count`] = null
+    state[`${this.singular}persistenceKey`] = null
+    state[`${this.plural}persistenceKey`] = null
   }
 
   generateActions (actions: ActionTree<any, any>) {
     actions[this.actions.fetchCollection] = this.generateFetchCollectionAction()
     actions[this.actions.fetchItem] = this.generateFetchItemAction()
-
-    // if(this.hasSlugField) {
-    //   actions[this.actions.fetchItemBySlug] = this.generateFetchItemBySlugAction()
-    // }
   }
 
   generateGetters (getters: GetterTree<any, any>) {
     getters[this.singular] = state => state[this.singular]
-    getters[`${this.plural}Count`] = state => state[`${this.plural}Count`]
+    // getters[`${this.plural}Count`] = state => state[`${this.plural}Count`]
     getters[this.plural] = state => state[this.plural]
   }
 
   generateMutations (mutations: MutationTree<any>) {
-    mutations[this.mutations.setCollection] = (state, payload) => state[this.plural] = payload
-    mutations[this.mutations.setCount] = (state, payload) => state[`${this.plural}Count`] = payload
-    mutations[this.mutations.setItem] = (state, payload) => state[this.singular] = payload
+    mutations[this.mutations.setCollection] = (state, {items, persistenceKey}) => {
+      state[this.plural] = items
+      state[`${this.plural}persistenceKey`] = persistenceKey
+    }
+    mutations[this.mutations.setItem] = (state, {item, persistenceKey}) => {
+      state[this.singular] = item
+      state[`${this.singular}persistenceKey`] = persistenceKey
+    }
+    // mutations[this.mutations.setCount] = (state, payload) => state[`${this.plural}Count`] = payload
   }
 
   generateFetchItemAction () {
-    return ({ commit }, { query, variables = {}}) => new Promise((resolve, reject) => {
+    return ({ commit }, { query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
           let item: object
@@ -83,35 +84,36 @@ export default class StrapiType {
             item = resp.data[this.singular]
           }
 
-          console.log(`[Strapi] Fetched single ${this.singular}:`, item)
-          commit(this.mutations.setItem, item)
+          Logger.info(`Fetched single ${this.singular}:`, 'Strapi', item)()
+          commit(this.mutations.setItem, {item, persistenceKey})
           resolve(item)
         })
         .catch(err => {
-          console.error(`[Strapi] Failed to fetch item ${this.singular}:`, err)
-          commit(this.mutations.setItem, null)
+          Logger.error(`Failed to fetch item ${this.singular}:`, 'Strapi', err)()
+          commit(this.mutations.setItem, {item: null, persistenceKey})
           reject(err)
         })
     })
   }
 
   generateFetchCollectionAction () {
-    return ({ commit, state }, { query, variables = {}}) => new Promise((resolve, reject) => {
+    return ({ commit, state }, { query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
           let items = resp.data[this.plural]
-          console.log(`[Strapi] Fetched collection ${this.plural}:`, items.length)
-          commit(this.mutations.setCollection, items)
+          Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items)()
+          commit(this.mutations.setCollection, {items, persistenceKey})
 
-          if ('count' in resp.data) {
-            commit(this.mutations.setCount, resp.data.count.length)
-          }
+          // if ('count' in resp.data) {
+          //   commit(this.mutations.setCount, resp.data.count.length)
+          // }
 
           resolve(items)
         })
         .catch(err => {
-          console.error(`[Strapi] Failed to fetch collection of ${this.plural}:`, err)
-          commit(this.mutations.setCollection, [])
+          Logger.error(`Failed to fetch collection of ${this.plural}:`, 'Strapi', err)()
+
+          commit(this.mutations.setCollection, {items: [], persistenceKey})
           reject(err)
         })
     })
