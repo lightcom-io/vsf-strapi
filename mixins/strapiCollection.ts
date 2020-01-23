@@ -29,7 +29,7 @@ export default (typeName: string) => {
     },
     // Client-side only
     mounted () {
-      if (!this[type.plural].length || !this.strapiPersistenceMatch) {
+      if (!this[type.plural] || !this[type.plural].length || !this.strapiPersistenceMatch) {
         this.fetchCollection()
       }
     },

@@ -11,6 +11,12 @@ const defaultQueryVars = {
   where: undefined
 }
 
+const checkForErrors = (resp) => {
+  if (resp.errors && resp.errors.length) {
+    throw new Error(resp.errors.map(err => err.message).join(' | '))
+  }
+}
+
 export default class StrapiType {
   strapi: Strapi;
   name: string;
@@ -77,6 +83,7 @@ export default class StrapiType {
     return ({ commit }, { query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
+          checkForErrors(resp)
           let item: object
           if (this.plural in resp.data) {
             item = resp.data[this.plural].shift()
@@ -100,7 +107,9 @@ export default class StrapiType {
     return ({ commit, state }, { query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
+          checkForErrors(resp)
           let items = resp.data[this.plural]
+
           Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items)()
           commit(this.mutations.setCollection, {items, persistenceKey})
 
