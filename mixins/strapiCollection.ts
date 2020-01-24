@@ -23,8 +23,8 @@ export default (typeName: string) => {
     },
     computed: {
       ...mapGetters({
-        [type.plural]: `strapi/${type.plural}`,
-        count: `strapi/${type.plural}Count`
+        [type.plural]: `strapi/${type.plural}`
+        // count: `strapi/${type.plural}Count`
       }),
       strapiPersistenceMatch () {
         return this.strapiPersistenceKey === this.$store.state.strapi[`${type.plural}PersistenceKey`]
