@@ -52,8 +52,8 @@ export default class StrapiType {
     state[this.singular] = null
     state[this.plural] = []
     // state[`${this.plural}Count`] = null
-    state[`${this.singular}persistenceKey`] = null
-    state[`${this.plural}persistenceKey`] = null
+    state[`${this.singular}PersistenceKey`] = null
+    state[`${this.plural}PersistenceKey`] = null
   }
 
   generateActions (actions: ActionTree<any, any>) {
@@ -70,11 +70,11 @@ export default class StrapiType {
   generateMutations (mutations: MutationTree<any>) {
     mutations[this.mutations.setCollection] = (state, {items, persistenceKey}) => {
       state[this.plural] = items
-      state[`${this.plural}persistenceKey`] = persistenceKey
+      state[`${this.plural}PersistenceKey`] = persistenceKey
     }
     mutations[this.mutations.setItem] = (state, {item, persistenceKey}) => {
       state[this.singular] = item
-      state[`${this.singular}persistenceKey`] = persistenceKey
+      state[`${this.singular}PersistenceKey`] = persistenceKey
     }
     // mutations[this.mutations.setCount] = (state, payload) => state[`${this.plural}Count`] = payload
   }

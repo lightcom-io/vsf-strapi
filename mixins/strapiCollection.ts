@@ -15,7 +15,10 @@ export default (typeName: string) => {
     },
     data () {
       return {
-        strapiError: null
+        strapiLoading: false,
+        strapiError: null,
+        strapiPersistenceKey: this.$route.fullPath,
+        strapiIgnoreRouteChange: false
       }
     },
     computed: {
@@ -24,27 +27,30 @@ export default (typeName: string) => {
         count: `strapi/${type.plural}Count`
       }),
       strapiPersistenceMatch () {
-        return this.getStrapiPersistenceKey() === this.$store.state.strapi[`${type.plural}persistenceKey`]
+        return this.strapiPersistenceKey === this.$store.state.strapi[`${type.plural}PersistenceKey`]
       }
     },
-    // Client-side only
     mounted () {
       if (!this[type.plural] || !this[type.plural].length || !this.strapiPersistenceMatch) {
         this.fetchCollection()
       }
     },
     methods: {
-      getStrapiPersistenceKey () {
-        return this.$route.fullPath
-      },
       fetchCollection () {
-        const persistenceKey = this.getStrapiPersistenceKey()
+        if (this.strapiLoading) return
+        const persistenceKey = this.strapiPersistenceKey
         const {query, variables = {}} = this.strapiQuery()
+
+        this.strapiLoading = true
 
         return this.$store.dispatch(`strapi/${type.actions.fetchCollection}`, {query, variables, persistenceKey})
           .catch(err => {
             this.strapiError = err
             if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)
+          })
+          .then(res => {
+            this.strapiLoading = false
+            return res
           })
       }
     }
