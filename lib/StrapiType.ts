@@ -87,6 +87,8 @@ export default class StrapiType {
           let item: object
           if (this.plural in resp.data) {
             item = resp.data[this.plural].shift()
+          } else if (Array.isArray(resp.data[this.singular])) {
+            item = resp.data[this.singular].shift()
           } else {
             item = resp.data[this.singular]
           }
