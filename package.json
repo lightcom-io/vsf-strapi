@@ -27,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/lightcom-io/vsf-strapi/issues"
   },
-  "homepage": "https://github.com/lightcom-io/vsf-strapi#readme"
+  "homepage": "https://github.com/lightcom-io/vsf-strapi#readme",
+  "dependencies": {
+    "camel-case": "^4.1.1"
+  }
 }

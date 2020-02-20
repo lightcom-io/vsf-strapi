@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import pluralize from 'pluralize'
 import config from 'config'
 import StrapiType from './StrapiType'

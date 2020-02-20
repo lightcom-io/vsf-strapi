@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import camelCase from 'camel-case'
 import pluralize from 'pluralize'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import { Strapi } from './Strapi'
@@ -34,9 +34,9 @@ export default class StrapiType {
     }
 
     this.actions = {
-      fetchCollection: _.camelCase(`fetch-${this.plural}`),
-      fetchItem: _.camelCase(`fetch-${this.singular}`)
-      // fetchItemBySlug: _.camelCase(`fetch-${this.singular}-by-slug`),
+      fetchCollection: camelCase(`fetch-${this.plural}`),
+      fetchItem: camelCase(`fetch-${this.singular}`)
+      // fetchItemBySlug: camelCase(`fetch-${this.singular}-by-slug`),
     }
   }
 
