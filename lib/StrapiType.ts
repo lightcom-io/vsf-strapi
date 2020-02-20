@@ -1,4 +1,4 @@
-import camelCase from 'camel-case'
+import { camelCase } from 'camel-case'
 import pluralize from 'pluralize'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import { Strapi } from './Strapi'
