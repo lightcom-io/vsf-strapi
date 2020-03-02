@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import { camelCase } from 'camel-case'
 import pluralize from 'pluralize'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
@@ -36,7 +37,6 @@ export default class StrapiType {
     this.actions = {
       fetchCollection: camelCase(`fetch-${this.plural}`),
       fetchItem: camelCase(`fetch-${this.singular}`)
-      // fetchItemBySlug: camelCase(`fetch-${this.singular}-by-slug`),
     }
   }
 
@@ -51,7 +51,6 @@ export default class StrapiType {
   generateState (state: any) {
     state[this.singular] = null
     state[this.plural] = []
-    // state[`${this.plural}Count`] = null
     state[`${this.singular}PersistenceKey`] = null
     state[`${this.plural}PersistenceKey`] = null
   }
@@ -63,7 +62,6 @@ export default class StrapiType {
 
   generateGetters (getters: GetterTree<any, any>) {
     getters[this.singular] = state => state[this.singular]
-    // getters[`${this.plural}Count`] = state => state[`${this.plural}Count`]
     getters[this.plural] = state => state[this.plural]
   }
 
@@ -76,11 +74,10 @@ export default class StrapiType {
       state[this.singular] = item
       state[`${this.singular}PersistenceKey`] = persistenceKey
     }
-    // mutations[this.mutations.setCount] = (state, payload) => state[`${this.plural}Count`] = payload
   }
 
   generateFetchItemAction () {
-    return ({ commit }, { query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
+    return ({ commit }, {query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
           checkForErrors(resp)
@@ -106,7 +103,7 @@ export default class StrapiType {
   }
 
   generateFetchCollectionAction () {
-    return ({ commit, state }, { query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
+    return ({ commit, state }, {query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
           checkForErrors(resp)
@@ -114,10 +111,6 @@ export default class StrapiType {
 
           Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items)()
           commit(this.mutations.setCollection, {items, persistenceKey})
-
-          // if ('count' in resp.data) {
-          //   commit(this.mutations.setCount, resp.data.count.length)
-          // }
 
           resolve(items)
         })

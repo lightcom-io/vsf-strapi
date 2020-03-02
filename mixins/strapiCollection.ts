@@ -15,19 +15,23 @@ export default (typeName: string) => {
     },
     data () {
       return {
-        strapiLoading: false,
-        strapiError: null,
-        strapiPersistenceKey: this.$route.fullPath,
-        strapiIgnoreRouteChange: false
+        strapiLoading: false
       }
     },
     computed: {
       ...mapGetters({
         [type.plural]: `strapi/${type.plural}`
-        // count: `strapi/${type.plural}Count`
       }),
+      strapiPersistenceKey () {
+        return this.$route.fullPath
+      },
       strapiPersistenceMatch () {
         return this.strapiPersistenceKey === this.$store.state.strapi[`${type.plural}PersistenceKey`]
+      }
+    },
+    watch: {
+      $route () {
+        this.strapiPersistenceMatch || this.fetchCollection()
       }
     },
     mounted () {
@@ -45,7 +49,6 @@ export default (typeName: string) => {
 
         return this.$store.dispatch(`strapi/${type.actions.fetchCollection}`, {query, variables, persistenceKey})
           .catch(err => {
-            this.strapiError = err
             if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)
           })
           .then(res => {

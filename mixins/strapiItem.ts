@@ -11,22 +11,23 @@ export default (typeName: string) => {
     },
     data () {
       return {
-        strapiError: null,
-        strapiPersistenceKey: this.$route.fullPath,
-        strapiIgnoreRouteChange: false
+        strapiLoading: false
       }
     },
     computed: {
       ...mapGetters({
         [type.singular]: `strapi/${type.singular}`
       }),
+      strapiPersistenceKey () {
+        return this.$route.fullPath
+      },
       strapiPersistenceMatch () {
-        return this.strapiPersistenceKey === this.$store.state.strapi[`${type.singular}persistenceKey`]
+        return this.strapiPersistenceKey === this.$store.state.strapi[`${type.singular}PersistenceKey`]
       }
     },
     watch: {
-      $route (to, from) {
-        this.strapiIgnoreRouteChange || this.fetchItem()
+      $route () {
+        this.strapiPersistenceMatch || this.fetchItem()
       }
     },
     mounted () {
@@ -36,12 +37,19 @@ export default (typeName: string) => {
     },
     methods: {
       fetchItem () {
+        if (this.strapiLoading) return
         const persistenceKey = this.strapiPersistenceKey
         const {query, variables = {}} = this.strapiQuery()
+
+        this.strapiLoading = true
+
         return this.$store.dispatch(`strapi/${type.actions.fetchItem}`, {query, variables, persistenceKey})
           .catch(err => {
-            this.strapiError = err
             if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)
+          })
+          .then(res => {
+            this.strapiLoading = false
+            return res
           })
       }
     }

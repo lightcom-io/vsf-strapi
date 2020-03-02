@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import pluralize from 'pluralize'
 import config from 'config'
 import StrapiType from './StrapiType'
@@ -38,7 +39,7 @@ export class Strapi {
 
       return Promise.reject(resp.statusText)
     }
-    return await resp.json()
+    return resp.json()
   }
 
   generateState () {
