@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
+import Vue from 'vue'
 import { camelCase } from 'camel-case'
 import pluralize from 'pluralize'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
@@ -67,12 +68,12 @@ export default class StrapiType {
 
   generateMutations (mutations: MutationTree<any>) {
     mutations[this.mutations.setCollection] = (state, {items, persistenceKey}) => {
-      state[this.plural] = items
-      state[`${this.plural}PersistenceKey`] = persistenceKey
+      Vue.set(state, this.plural, items)
+      Vue.set(state, `${this.plural}PersistenceKey`, persistenceKey)
     }
     mutations[this.mutations.setItem] = (state, {item, persistenceKey}) => {
-      state[this.singular] = item
-      state[`${this.singular}PersistenceKey`] = persistenceKey
+      Vue.set(state, this.singular, item)
+      Vue.set(state, `${this.singular}PersistenceKey`, persistenceKey)
     }
   }
 
