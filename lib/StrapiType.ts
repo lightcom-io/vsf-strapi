@@ -27,7 +27,7 @@ export default class StrapiType {
 
   constructor (type: { name: string }, strapi: Strapi) {
     this.strapi = strapi
-    this.name = pluralize(type.name, Infinity)
+    this.name = camelCase(pluralize(type.name, Infinity))
 
     this.mutations = {
       setCollection: `SET_${this.plural.toUpperCase()}`,

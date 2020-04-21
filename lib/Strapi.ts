@@ -5,6 +5,7 @@ import StrapiType from './StrapiType'
 import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import fetch from 'isomorphic-fetch'
 import { Logger } from '@vue-storefront/core/lib/logger'
+import { camelCase } from 'camel-case'
 
 export class Strapi {
   url: string;
@@ -75,7 +76,7 @@ export class Strapi {
   }
 
   getType (typeName: string) {
-    return this.types.find(type => type.name === pluralize(typeName, Infinity))
+    return this.types.find(type => type.name === camelCase(pluralize(typeName, Infinity)))
   }
 
   resolve (url) {
