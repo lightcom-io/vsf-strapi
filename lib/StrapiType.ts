@@ -22,22 +22,37 @@ const checkForErrors = (resp) => {
 export default class StrapiType {
   strapi: Strapi;
   name: string;
+  single: boolean;
   mutations: any;
   actions: any;
 
-  constructor (type: { name: string }, strapi: Strapi) {
+  constructor (type: { name: string, single: boolean }, strapi: Strapi) {
     this.strapi = strapi
-    this.name = camelCase(pluralize(type.name, Infinity))
+    this.single = Boolean(type.single)
 
-    this.mutations = {
-      setCollection: `SET_${this.plural.toUpperCase()}`,
-      setCount: `SET_${this.plural.toUpperCase()}_COUNT`,
-      setItem: `SET_${this.singular.toUpperCase()}`
-    }
+    if (this.single) {
+      this.name = camelCase(type.name)
 
-    this.actions = {
-      fetchCollection: camelCase(`fetch-${this.plural}`),
-      fetchItem: camelCase(`fetch-${this.singular}`)
+      this.mutations = {
+        setItem: `SET_${this.singular.toUpperCase()}`
+      }
+
+      this.actions = {
+        fetchItem: camelCase(`fetch-${this.singular}`)
+      }
+    } else {
+      this.name = camelCase(pluralize(type.name, Infinity))
+
+      this.mutations = {
+        setCollection: `SET_${this.plural.toUpperCase()}`,
+        setCount: `SET_${this.plural.toUpperCase()}_COUNT`,
+        setItem: `SET_${this.singular.toUpperCase()}`
+      }
+
+      this.actions = {
+        fetchCollection: camelCase(`fetch-${this.plural}`),
+        fetchItem: camelCase(`fetch-${this.singular}`)
+      }
     }
   }
 
@@ -51,29 +66,39 @@ export default class StrapiType {
 
   generateState (state: any) {
     state[this.singular] = null
-    state[this.plural] = []
     state[`${this.singular}PersistenceKey`] = null
-    state[`${this.plural}PersistenceKey`] = null
+
+    if (!this.single) {
+      state[this.plural] = []
+      state[`${this.plural}PersistenceKey`] = null
+    }
   }
 
   generateActions (actions: ActionTree<any, any>) {
-    actions[this.actions.fetchCollection] = this.generateFetchCollectionAction()
     actions[this.actions.fetchItem] = this.generateFetchItemAction()
+    if (!this.single) {
+      actions[this.actions.fetchCollection] = this.generateFetchCollectionAction()
+    }
   }
 
   generateGetters (getters: GetterTree<any, any>) {
     getters[this.singular] = state => state[this.singular]
-    getters[this.plural] = state => state[this.plural]
+    if (!this.single) {
+      getters[this.plural] = state => state[this.plural]
+    }
   }
 
   generateMutations (mutations: MutationTree<any>) {
-    mutations[this.mutations.setCollection] = (state, {items, persistenceKey}) => {
-      Vue.set(state, this.plural, items)
-      Vue.set(state, `${this.plural}PersistenceKey`, persistenceKey)
-    }
     mutations[this.mutations.setItem] = (state, {item, persistenceKey}) => {
       Vue.set(state, this.singular, item)
       Vue.set(state, `${this.singular}PersistenceKey`, persistenceKey)
+    }
+
+    if (!this.single) {
+      mutations[this.mutations.setCollection] = (state, {items, persistenceKey}) => {
+        Vue.set(state, this.plural, items)
+        Vue.set(state, `${this.plural}PersistenceKey`, persistenceKey)
+      }
     }
   }
 
@@ -83,7 +108,9 @@ export default class StrapiType {
         .then((resp) => {
           checkForErrors(resp)
           let item: object
-          if (this.plural in resp.data) {
+          if (this.single) {
+            item = resp.data[this.singular]
+          } else if (this.plural in resp.data) {
             item = resp.data[this.plural].shift()
           } else if (Array.isArray(resp.data[this.singular])) {
             item = resp.data[this.singular].shift()

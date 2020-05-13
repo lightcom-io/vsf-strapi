@@ -47,9 +47,8 @@ export default (typeName: string) => {
           .catch(err => {
             if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)
           })
-          .then(res => {
+          .finally(() => {
             this.strapiLoading = false
-            return res
           })
       }
     }

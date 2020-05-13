@@ -76,7 +76,8 @@ export class Strapi {
   }
 
   getType (typeName: string) {
-    return this.types.find(type => type.name === camelCase(pluralize(typeName, Infinity)))
+    return this.types.find(type => type.single && type.name === camelCase(typeName)) ||
+    this.types.find(type => type.name === camelCase(pluralize(typeName, Infinity)))
   }
 
   resolve (url) {

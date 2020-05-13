@@ -35,7 +35,7 @@ export default (typeName: string) => {
       }
     },
     mounted () {
-      if (!this[type.plural] || !this[type.plural].length || !this.strapiPersistenceMatch) {
+      if (!this[type.plural]?.length || !this.strapiPersistenceMatch) {
         this.fetchCollection()
       }
     },
@@ -51,9 +51,8 @@ export default (typeName: string) => {
           .catch(err => {
             if ('strapiErrorHandler' in this) this.strapiErrorHandler(err)
           })
-          .then(res => {
+          .finally(() => {
             this.strapiLoading = false
-            return res
           })
       }
     }
