@@ -2,12 +2,12 @@ import { mapGetters } from 'vuex'
 import Strapi from '../lib/Strapi'
 import { isServer } from '@vue-storefront/core/helpers'
 
-export default (typeName: string) => {
+export default (typeName: string, onDemand: boolean = false) => {
   const type = Strapi.getType(typeName)
 
   return {
     serverPrefetch () {
-      return this.fetchItem()
+      return onDemand || this.fetchItem()
     },
     data () {
       return {
@@ -27,11 +27,11 @@ export default (typeName: string) => {
     },
     watch: {
       $route () {
-        this.strapiPersistenceMatch || this.fetchItem()
+        onDemand || this.strapiPersistenceMatch || this.fetchItem()
       }
     },
     mounted () {
-      if (!this[type.singular] || !this.strapiPersistenceMatch) {
+      if (!onDemand && (!this[type.singular] || !this.strapiPersistenceMatch)) {
         this.fetchItem()
       }
     },
