@@ -46,12 +46,14 @@ export default class StrapiType {
       this.mutations = {
         setCollection: `SET_${this.plural.toUpperCase()}`,
         setCount: `SET_${this.plural.toUpperCase()}_COUNT`,
-        setItem: `SET_${this.singular.toUpperCase()}`
+        setItem: `SET_${this.singular.toUpperCase()}`,
+        setStatic: `SET_${this.plural.toUpperCase()}_STATIC`
       }
 
       this.actions = {
         fetchCollection: camelCase(`fetch-${this.plural}`),
-        fetchItem: camelCase(`fetch-${this.singular}`)
+        fetchItem: camelCase(`fetch-${this.singular}`),
+        fetchStatic: camelCase(`fetch-${this.plural}-static`)
       }
     }
   }
@@ -64,12 +66,17 @@ export default class StrapiType {
     return this.name
   }
 
+  get static () {
+    return `${this.plural}Static`
+  }
+
   generateState (state: any) {
     state[this.singular] = null
     state[`${this.singular}PersistenceKey`] = null
 
     if (!this.single) {
       state[this.plural] = []
+      state[this.static] = {}
       state[`${this.plural}PersistenceKey`] = null
     }
   }
@@ -78,6 +85,7 @@ export default class StrapiType {
     actions[this.actions.fetchItem] = this.generateFetchItemAction()
     if (!this.single) {
       actions[this.actions.fetchCollection] = this.generateFetchCollectionAction()
+      actions[this.actions.fetchStatic] = this.generateFetchItemAction(true)
     }
   }
 
@@ -85,6 +93,7 @@ export default class StrapiType {
     getters[this.singular] = state => state[this.singular]
     if (!this.single) {
       getters[this.plural] = state => state[this.plural]
+      getters[this.static] = (state) => (persistenceKey) => state[this.static][persistenceKey]
     }
   }
 
@@ -99,10 +108,15 @@ export default class StrapiType {
         Vue.set(state, this.plural, items)
         Vue.set(state, `${this.plural}PersistenceKey`, persistenceKey)
       }
+
+      mutations[this.mutations.setStatic] = (state, {item, persistenceKey}) => {
+        Vue.set(state[this.static], persistenceKey, item)
+      }
     }
   }
 
-  generateFetchItemAction () {
+  generateFetchItemAction (statically: boolean = false) {
+    const mutation = statically ? 'setStatic' : 'setItem'
     return ({ commit }, {query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
       this.strapi.query(query, variables)
         .then((resp) => {
@@ -119,12 +133,12 @@ export default class StrapiType {
           }
 
           Logger.info(`Fetched single ${this.singular}:`, 'Strapi', item)()
-          commit(this.mutations.setItem, {item, persistenceKey})
+          commit(this.mutations[mutation], {item, persistenceKey})
           resolve(item)
         })
         .catch(err => {
           Logger.error(`Failed to fetch item ${this.singular}:`, 'Strapi', err)()
-          commit(this.mutations.setItem, {item: null, persistenceKey})
+          commit(this.mutations[mutation], {item: null, persistenceKey})
           reject(err)
         })
     })

@@ -1,8 +1,7 @@
 import { mapGetters } from 'vuex'
 import Strapi from '../lib/Strapi'
-import { isServer } from '@vue-storefront/core/helpers'
 
-export default (typeName: string, onDemand: boolean = false) => {
+export default (typeName: string, { onDemand = false, persist = false }: {onDemand?: boolean, persist?: boolean|string} = {}) => {
   const type = Strapi.getType(typeName)
 
   if (!type) {
@@ -23,7 +22,7 @@ export default (typeName: string, onDemand: boolean = false) => {
         [type.plural]: `strapi/${type.plural}`
       }),
       strapiPersistenceKey () {
-        return this.$route.fullPath
+        return persist ? (persist === true ? this.$vnode.tag : persist) : this.$route.fullPath
       },
       strapiPersistenceMatch () {
         return this.strapiPersistenceKey === this.$store.state.strapi[`${type.plural}PersistenceKey`]
