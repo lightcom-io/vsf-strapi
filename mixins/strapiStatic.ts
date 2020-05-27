@@ -1,4 +1,4 @@
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import Strapi from '../lib/Strapi'
 
 export default (typeName: string, { onDemand = false }: {onDemand?: boolean} = {}) => {
@@ -15,8 +15,11 @@ export default (typeName: string, { onDemand = false }: {onDemand?: boolean} = {
       }
     },
     computed: {
-      ...mapGetters({
-        [type.static]: `strapi/${type.static}`
+      ...mapGetters('strapi', {
+        [type.static]: `${type.static}`
+      }),
+      ...mapState('strapi', {
+        [`${type.static}Map`]: `${type.static}`
       })
     },
     beforeMount () {
@@ -27,6 +30,11 @@ export default (typeName: string, { onDemand = false }: {onDemand?: boolean} = {
     watch: {
       strapiPersistenceKey () {
         onDemand || this.fetchItem()
+      },
+      [`${type.static}Map`]: {
+        handler () {
+          this.fetchItem()
+        }
       }
     },
     mounted () {
