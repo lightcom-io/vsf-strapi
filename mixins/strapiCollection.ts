@@ -29,7 +29,7 @@ export default (typeName: string, { onDemand = false, persist = false }: {onDema
       }
     },
     watch: {
-      $route () {
+      strapiPersistenceKey () {
         onDemand || this.strapiPersistenceMatch || this.fetchCollection()
       }
     },
