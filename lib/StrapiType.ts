@@ -45,7 +45,6 @@ export default class StrapiType {
 
       this.mutations = {
         setCollection: `SET_${this.plural.toUpperCase()}`,
-        setCount: `SET_${this.plural.toUpperCase()}_COUNT`,
         setItem: `SET_${this.singular.toUpperCase()}`,
         setStatic: `SET_${this.plural.toUpperCase()}_STATIC`
       }
@@ -53,7 +52,8 @@ export default class StrapiType {
       this.actions = {
         fetchCollection: camelCase(`fetch-${this.plural}`),
         fetchItem: camelCase(`fetch-${this.singular}`),
-        fetchStatic: camelCase(`fetch-${this.plural}-static`)
+        fetchStatic: camelCase(`fetch-${this.plural}-static`),
+        fetchStaticCollection: camelCase(`fetch-${this.plural}-static-collection`)
       }
     }
   }
@@ -86,6 +86,7 @@ export default class StrapiType {
     if (!this.single) {
       actions[this.actions.fetchCollection] = this.generateFetchCollectionAction()
       actions[this.actions.fetchStatic] = this.generateFetchItemAction(true)
+      actions[this.actions.fetchStaticCollection] = this.generateFetchCollectionAction(true)
     }
   }
 
@@ -117,51 +118,57 @@ export default class StrapiType {
 
   generateFetchItemAction (statically: boolean = false) {
     const mutation = statically ? 'setStatic' : 'setItem'
-    return ({ commit }, {query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
-      this.strapi.query(query, variables)
-        .then((resp) => {
-          checkForErrors(resp)
-          let item: object
-          if (this.single) {
-            item = resp.data[this.singular]
-          } else if (this.plural in resp.data) {
-            item = resp.data[this.plural].shift()
-          } else if (Array.isArray(resp.data[this.singular])) {
-            item = resp.data[this.singular].shift()
-          } else {
-            item = resp.data[this.singular]
-          }
+    return async ({ commit }, {query, variables = {}, persistenceKey}) => {
+      try {
+        const response = await this.strapi.query(query, variables)
+        checkForErrors(response)
+        let item: object
+        if (this.single) {
+          item = response.data[this.singular]
+        } else if (this.plural in response.data) {
+          item = response.data[this.plural].shift()
+        } else if (Array.isArray(response.data[this.singular])) {
+          item = response.data[this.singular].shift()
+        } else {
+          item = response.data[this.singular]
+        }
 
-          Logger.info(`Fetched single ${this.singular}:`, 'Strapi', item)()
-          commit(this.mutations[mutation], {item, persistenceKey})
-          resolve(item)
-        })
-        .catch(err => {
-          Logger.error(`Failed to fetch item ${this.singular}:`, 'Strapi', err)()
-          commit(this.mutations[mutation], {item: null, persistenceKey})
-          reject(err)
-        })
-    })
+        Logger.info(`Fetched single ${this.singular}:`, 'Strapi', item)()
+        commit(this.mutations[mutation], {item, persistenceKey})
+        return item
+      } catch (err) {
+        Logger.error(`Failed to fetch item ${this.singular}:`, 'Strapi', err)()
+        commit(this.mutations[mutation], {item: null, persistenceKey})
+      }
+    }
   }
 
-  generateFetchCollectionAction () {
-    return ({ commit, state }, {query, variables = {}, persistenceKey}) => new Promise((resolve, reject) => {
-      this.strapi.query(query, variables)
-        .then((resp) => {
-          checkForErrors(resp)
-          let items = resp.data[this.plural]
+  generateFetchCollectionAction (statically: boolean = false) {
+    return async ({ commit, state }, {query, variables = {}, persistenceKey}) => {
+      try {
+        const response = await this.strapi.query(query, variables)
 
-          Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items)()
+        checkForErrors(response)
+        let items = response.data[this.plural]
+
+        Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items)()
+        if (statically) {
+          for (let item of items) {
+            if (persistenceKey in item) {
+              commit(this.mutations.setStatic, {item, persistenceKey: item[persistenceKey]})
+            } else {
+              Logger.error(`Missing peristence key("${persistenceKey}") in ${this.plural} item:`, 'Strapi', item)()
+            }
+          }
+        } else {
           commit(this.mutations.setCollection, {items, persistenceKey})
+        }
 
-          resolve(items)
-        })
-        .catch(err => {
-          Logger.error(`Failed to fetch collection of ${this.plural}:`, 'Strapi', err)()
-
-          commit(this.mutations.setCollection, {items: [], persistenceKey})
-          reject(err)
-        })
-    })
+        return items
+      } catch (err) {
+        Logger.error(`Failed to fetch collection of ${this.plural}:`, 'Strapi', err)()
+        statically || commit(this.mutations.setCollection, {items: [], persistenceKey})
+      }
+    }
   }
 }

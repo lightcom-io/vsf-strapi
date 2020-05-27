@@ -24,6 +24,11 @@ export default (typeName: string, { onDemand = false }: {onDemand?: boolean} = {
         throw new Error(`Strapi: Static loading of items require the "strapiPersistenceKey" property to be set or computed in the component`)
       }
     },
+    watch: {
+      strapiPersistenceKey () {
+        onDemand || this.fetchItem()
+      }
+    },
     mounted () {
       const item = this[type.static](this.strapiPersistenceKey)
 
@@ -34,8 +39,16 @@ export default (typeName: string, { onDemand = false }: {onDemand?: boolean} = {
       }
     },
     methods: {
-      fetchItem () {
+      fetchItem (force: boolean = false) {
         if (this.strapiLoading) return
+
+        const item = this[type.static](this.strapiPersistenceKey)
+
+        if (item && !force) {
+          this[type.singular] = item
+          return
+        }
+
         const persistenceKey = this.strapiPersistenceKey
         const {query, variables = {}} = this.strapiQuery()
 
