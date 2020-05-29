@@ -1,5 +1,12 @@
 # vsf-strapi
 
+## Hotfix - Lakritsroten
+
+[LS-14]
+
+- Fixed bug related to iOS Safari. On `route-link` tap recipe collections was rewrited
+by collection that have only 4 items. Vue `watch -> $route()` was the issue of this behavior
+
 ## Setup
 ### Installation
 For now, we use this package as a git submodule:

@@ -29,11 +29,6 @@ export default (typeName: string) => {
         return this.strapiPersistenceKey === this.$store.state.strapi[`${type.plural}PersistenceKey`]
       }
     },
-    watch: {
-      $route () {
-        this.strapiPersistenceMatch || this.fetchCollection()
-      }
-    },
     mounted () {
       if (!this[type.plural] || !this[type.plural].length || !this.strapiPersistenceMatch) {
         this.fetchCollection()
