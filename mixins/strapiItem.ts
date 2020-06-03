@@ -1,7 +1,8 @@
 import { mapGetters } from 'vuex'
 import Strapi from '../lib/Strapi'
 import axios from 'axios'
-import config from 'config'
+
+import { Logger } from '@vue-storefront/core/lib/logger'
 
 export default (typeName: string, { onDemand = false, persist = false }: {onDemand?: boolean, persist?: boolean|string} = {}) => {
   const type = Strapi.getType(typeName)
@@ -55,7 +56,7 @@ export default (typeName: string, { onDemand = false, persist = false }: {onDema
       },
       async fetchRESTContent (endPoint, locale = false) {
         try {
-          let response = await axios.get(`${config.strapi.url}/${endPoint}`)
+          let response = await axios.get(`${Strapi.url}/${endPoint}`)
           this.dataREST = {
             ...response.data,
             ...response.data[`content_zone_${locale}`] && { content_zone: response.data[`content_zone_${locale}`] },
@@ -63,6 +64,7 @@ export default (typeName: string, { onDemand = false, persist = false }: {onDema
           }
         } catch (err) {
           console.log(err)
+          Logger.error(`Failed to fetch REST API item ${endPoint}:`, 'Strapi', err)()
         }
       }
     }
