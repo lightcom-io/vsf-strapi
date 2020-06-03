@@ -1,5 +1,7 @@
 import { mapGetters } from 'vuex'
 import Strapi from '../lib/Strapi'
+import axios from 'axios'
+import config from 'config'
 
 export default (typeName: string, { onDemand = false, persist = false }: {onDemand?: boolean, persist?: boolean|string} = {}) => {
   const type = Strapi.getType(typeName)
@@ -10,6 +12,7 @@ export default (typeName: string, { onDemand = false, persist = false }: {onDema
     },
     data () {
       return {
+        dataREST: {},
         strapiLoading: false
       }
     },
@@ -49,6 +52,18 @@ export default (typeName: string, { onDemand = false, persist = false }: {onDema
           .finally(() => {
             this.strapiLoading = false
           })
+      },
+      async fetchRESTContent (endPoint, locale = false) {
+        try {
+          let response = await axios.get(`${config.strapi.url}/${endPoint}`)
+          this.dataREST = {
+            ...response.data,
+            ...response.data[`content_zone_${locale}`] && { content_zone: response.data[`content_zone_${locale}`] },
+            ...response.data[`title_${locale}`] && { title: response.data[`title_${locale}`] }
+          }
+        } catch (err) {
+          console.log(err)
+        }
       }
     }
   }
