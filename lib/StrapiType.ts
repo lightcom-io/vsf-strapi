@@ -22,7 +22,7 @@ const checkForErrors = (resp) => {
 interface StrapiTypeInterface {
   name: string,
   single?: boolean,
-  cache?: boolean,
+  cacheItems?: boolean,
   cacheKey?: string
 }
 
@@ -32,18 +32,15 @@ export default class StrapiType {
   single: boolean;
   mutations: any;
   actions: any;
-  cache: boolean;
+  cacheItems: boolean;
   cacheKey: string;
   cacheName: string;
 
-  constructor (type: StrapiTypeInterface, strapi: Strapi) {
-    this.strapi = strapi
-    this.single = Boolean(type.single)
-    this.cache = type.cache || true
-    this.cacheKey = type.cacheKey || 'id'
+  constructor ({name, single, cacheItems = true, cacheKey = 'id'}: StrapiTypeInterface, strapi: Strapi) {
+    Object.assign(this, {strapi, single, cacheItems, cacheKey})
 
     if (this.single) {
-      this.name = camelCase(type.name)
+      this.name = camelCase(name)
 
       this.mutations = {
         setItem: `SET_${this.singular.toUpperCase()}`
@@ -53,7 +50,7 @@ export default class StrapiType {
         fetchItem: camelCase(`fetch-${this.singular}`)
       }
     } else {
-      this.name = camelCase(pluralize(type.name, Infinity))
+      this.name = camelCase(pluralize(name, Infinity))
 
       this.mutations = {
         setCollection: `SET_${this.plural.toUpperCase()}`,
@@ -69,7 +66,7 @@ export default class StrapiType {
       }
     }
 
-    this.cacheName = pluralize(type.name, Infinity).toUpperCase()
+    this.cacheName = pluralize(name, Infinity).toUpperCase()
   }
 
   get singular () {
@@ -190,20 +187,20 @@ export default class StrapiType {
   }
 
   cacheTagType () {
-    if (this.cache && Vue.prototype.$cacheTags) {
+    if (Vue.prototype.$cacheTags) {
       Vue.prototype.$cacheTags.add('S')
       Vue.prototype.$cacheTags.add(`S:${this.cacheName}`)
     }
   }
 
   cacheTag (item: object, query: string | object): boolean {
-    if (this.cacheKey in item) {
-      if (this.cache && Vue.prototype.$cacheTags) {
+    if (this.cacheItems && Vue.prototype.$cacheTags) {
+      if (this.cacheKey in item) {
         Vue.prototype.$cacheTags.add(`S:${this.cacheName}:${item[this.cacheKey]}`)
         return true
+      } else {
+        Logger.warn(`Missing cache key("${this.cacheKey}") in ${this.singular}:`, 'Strapi', query)()
       }
-    } else {
-      Logger.warn(`Missing cache key("${this.cacheKey}") in ${this.singular}:`, 'Strapi', query)()
     }
     return false
   }
