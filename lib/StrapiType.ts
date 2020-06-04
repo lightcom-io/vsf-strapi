@@ -19,16 +19,28 @@ const checkForErrors = (resp) => {
   }
 }
 
+interface StrapiTypeInterface {
+  name: string,
+  single?: boolean,
+  cache?: boolean,
+  cacheKey?: string
+}
+
 export default class StrapiType {
   strapi: Strapi;
   name: string;
   single: boolean;
   mutations: any;
   actions: any;
+  cache: boolean;
+  cacheKey: string;
+  cacheName: string;
 
-  constructor (type: { name: string, single: boolean }, strapi: Strapi) {
+  constructor (type: StrapiTypeInterface, strapi: Strapi) {
     this.strapi = strapi
     this.single = Boolean(type.single)
+    this.cache = type.cache || true
+    this.cacheKey = type.cacheKey || 'id'
 
     if (this.single) {
       this.name = camelCase(type.name)
@@ -56,6 +68,8 @@ export default class StrapiType {
         fetchStaticCollection: camelCase(`fetch-${this.plural}-static-collection`)
       }
     }
+
+    this.cacheName = pluralize(type.name, Infinity).toUpperCase()
   }
 
   get singular () {
@@ -135,6 +149,7 @@ export default class StrapiType {
 
         Logger.info(`Fetched single ${this.singular}:`, 'Strapi', item)()
         commit(this.mutations[mutation], {item, persistenceKey})
+        this.cacheTag(item, query)
         return item
       } catch (err) {
         Logger.error(`Failed to fetch item ${this.singular}:`, 'Strapi', err)()
@@ -156,12 +171,14 @@ export default class StrapiType {
           for (let item of items) {
             if (persistenceKey in item) {
               commit(this.mutations.setStatic, {item, persistenceKey: item[persistenceKey]})
+              this.cacheTag(item, query)
             } else {
               Logger.error(`Missing peristence key("${persistenceKey}") in ${this.plural} item:`, 'Strapi', item)()
             }
           }
         } else {
           commit(this.mutations.setCollection, {items, persistenceKey})
+          for (let i of items) if (!this.cacheTag(i, query)) break
         }
 
         return items
@@ -170,5 +187,24 @@ export default class StrapiType {
         statically || commit(this.mutations.setCollection, {items: [], persistenceKey})
       }
     }
+  }
+
+  cacheTagType () {
+    if (this.cache && Vue.prototype.$cacheTags) {
+      Vue.prototype.$cacheTags.add('S')
+      Vue.prototype.$cacheTags.add(`S:${this.cacheName}`)
+    }
+  }
+
+  cacheTag (item: object, query: string | object): boolean {
+    if (this.cacheKey in item) {
+      if (this.cache && Vue.prototype.$cacheTags) {
+        Vue.prototype.$cacheTags.add(`S:${this.cacheName}:${item[this.cacheKey]}`)
+        return true
+      }
+    } else {
+      Logger.warn(`Missing cache key("${this.cacheKey}") in ${this.singular}:`, 'Strapi', query)()
+    }
+    return false
   }
 }

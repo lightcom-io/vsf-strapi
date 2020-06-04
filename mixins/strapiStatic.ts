@@ -4,6 +4,8 @@ import Strapi from '../lib/Strapi'
 export default (typeName: string, { onDemand = false }: {onDemand?: boolean} = {}) => {
   const type = Strapi.getType(typeName)
 
+  type.cacheTagType()
+
   return {
     serverPrefetch () {
       return onDemand || this.fetchItem()

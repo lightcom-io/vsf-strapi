@@ -4,6 +4,8 @@ import Strapi from '../lib/Strapi'
 export default (typeName: string, { onDemand = false, persist = false }: {onDemand?: boolean, persist?: boolean|string} = {}) => {
   const type = Strapi.getType(typeName)
 
+  type.cacheTagType()
+
   if (!type) {
     throw new TypeError(`Strapi: unknown content type "${typeName}"`);
   }
