@@ -151,7 +151,7 @@ export default class StrapiType {
         checkForErrors(response)
         let items = response.data[this.plural]
 
-        Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items)()
+        Logger.info(`Fetched collection ${this.plural}:`, 'Strapi', items.length)()
         if (statically) {
           for (let item of items) {
             if (persistenceKey in item) {
