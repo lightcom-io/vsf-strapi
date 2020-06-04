@@ -6,6 +6,7 @@ import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import fetch from 'isomorphic-fetch'
 import { Logger } from '@vue-storefront/core/lib/logger'
 import { camelCase } from 'camel-case'
+import { jsonToGraphQLQuery } from 'json-to-graphql-query';
 
 export class Strapi {
   url: string;
@@ -19,8 +20,12 @@ export class Strapi {
     })
   }
 
-  async query (query: string, variables = {}) {
+  async query (query: string | object, variables = {}) {
     Logger.info('Performing query', 'Strapi', {query, variables})()
+
+    if (typeof query !== 'string') {
+      query = jsonToGraphQLQuery({ query })
+    }
 
     const gqlQueryBody = JSON.stringify({ query, variables })
 
