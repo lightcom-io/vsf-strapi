@@ -146,7 +146,7 @@ export default class StrapiType {
 
         Logger.info(`Fetched single ${this.singular}:`, 'Strapi', item)()
         commit(this.mutations[mutation], {item, persistenceKey})
-        this.cacheTag(item, query)
+        item && this.cacheTag(item, query)
         return item
       } catch (err) {
         Logger.error(`Failed to fetch item ${this.singular}:`, 'Strapi', err)()
