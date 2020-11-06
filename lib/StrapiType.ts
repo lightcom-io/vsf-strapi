@@ -6,13 +6,6 @@ import { ActionTree, GetterTree, MutationTree } from 'vuex';
 import { Strapi } from './Strapi'
 import { Logger } from '@vue-storefront/core/lib/logger'
 
-const defaultQueryVars = {
-  sort: undefined,
-  limit: 0,
-  start: 0,
-  where: undefined
-}
-
 const checkForErrors = (resp) => {
   if (resp.errors && resp.errors.length) {
     throw new Error(resp.errors.map(err => err.message).join(' | '))

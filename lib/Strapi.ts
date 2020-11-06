@@ -7,6 +7,7 @@ import fetch from 'isomorphic-fetch'
 import { Logger } from '@vue-storefront/core/lib/logger'
 import { camelCase } from 'camel-case'
 import { jsonToGraphQLQuery } from 'json-to-graphql-query';
+import { removeStoreCodeFromRoute, currentStoreView } from '@vue-storefront/core/lib/multistore'
 
 export class Strapi {
   url: string;
@@ -82,11 +83,50 @@ export class Strapi {
 
   getType (typeName: string) {
     return this.types.find(type => type.single && type.name === camelCase(typeName)) ||
-    this.types.find(type => type.name === camelCase(pluralize(typeName, Infinity)))
+      this.types.find(type => type.name === camelCase(pluralize(typeName, Infinity)))
   }
 
   resolve (url) {
     return `${this.url}${url}`
+  }
+
+  mappingFallback({type: typeName, route, query}) {
+    return async ({ dispatch }, {url, params}) => {
+      const { i18n, storeCode, appendStoreCode } = currentStoreView()
+
+      const slug = (removeStoreCodeFromRoute(url.startsWith('/') ? url.slice(1) : url) as string).replace(/\/$/, "")
+      const language = i18n.defaultLanguage.toLowerCase()
+
+      try {
+        const type = this.getType(typeName)
+        const persistenceKey = `${type.singular}:${slug}`
+
+        const item = await dispatch(`strapi/${type.actions.fetchItem}`, 
+          { 
+            query, 
+            variables: { 
+              slug, 
+              language 
+            }, 
+            persistenceKey
+          },
+          { 
+            root: true 
+          })
+
+        if(item) {
+          return {
+            name: route,
+            params: {
+              slug,
+              persistenceKey
+            }
+          }
+        }
+      } catch {
+        return undefined
+      }
+    }
   }
 }
 
